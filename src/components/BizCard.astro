@@ -1,0 +1,65 @@
+---
+import { site } from '../data/now';
+import { getSocials } from '../lib/content';
+import { icons } from '../lib/icons';
+
+interface Props {
+  layout: { cx: number; cy: number; r: number };
+}
+const { layout } = Astro.props;
+const socials = await getSocials();
+const COLS = 4;
+
+// "Telegram channel", "Discord server"; plain "GitHub" when the label adds nothing
+const nameOf = (label: string, title: string, slug: string) =>
+  label.startsWith('@') || label === slug ? title : `${title} ${label}`;
+---
+
+<section
+  class="item bizcard surface"
+  data-item="socials"
+  data-cx={layout.cx}
+  data-cy={layout.cy}
+  data-r={layout.r}
+  aria-label="Elsewhere"
+  style="view-transition-name: item-socials"
+>
+  <div class="bizcard__top mono">
+    <span>elsewhere</span>
+    <span>{site.domain}</span>
+  </div>
+  <p class="bizcard__name">{site.name}</p>
+  <ul class="bizcard__links">
+    {
+      socials.map(({ data: s }, i) => {
+        const icon = icons[s.icon];
+        const name = nameOf(s.label, icon.title, s.icon);
+        // two tiles of the same network side by side get a dashed link between them
+        const next = socials[i + 1];
+        const paired = next && next.data.icon === s.icon && i % COLS !== COLS - 1;
+        const glyph = (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d={icon.path} />
+          </svg>
+        );
+        return (
+          <li class={paired ? 'is-paired' : undefined} style={`--brand: #${icon.hex === '000000' ? '231c17' : icon.hex}`}>
+            {s.copy ? (
+              <button type="button" class="social" data-copy={s.handle} title={`${name}: ${s.handle} (click to copy)`}>
+                <span class="social__icon">{glyph}</span>
+                <span class="social__label mono" data-label>{s.label}</span>
+                <span class="visually-hidden">{`${name} ${s.handle}, copy to clipboard`}</span>
+              </button>
+            ) : (
+              <a class="social" href={s.href} target="_blank" rel="me noopener noreferrer" draggable="false" title={`${name}: ${s.handle}`}>
+                <span class="social__icon">{glyph}</span>
+                <span class="social__label mono">{s.label}</span>
+                <span class="visually-hidden">{`${name} ${s.handle}`}</span>
+              </a>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>

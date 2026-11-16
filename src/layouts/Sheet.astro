@@ -1,0 +1,40 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** desk item id, e.g. "note-some-slug" */
+  itemId: string;
+  kind: 'note' | 'folder';
+  current?: 'notes' | 'projects';
+}
+const { title, description, itemId, kind, current } = Astro.props;
+---
+
+<Base title={title} description={description} current={current}>
+  <main class="sheet-wrap" data-sheet-page>
+    <div class="sheet-frame">
+      <article class={`sheet sheet--${kind}`} style={`view-transition-name: item-${itemId}`} tabindex="-1">
+        <a class="sheet__corner" href="/" data-put-back data-item-ref={itemId} aria-label="Put back on the desk">
+          <span class="sheet__corner-hint mono" aria-hidden="true">put back</span>
+        </a>
+        <slot />
+      </article>
+    </div>
+  </main>
+  <script is:inline>
+    // Opened directly (not from the desk): "put back" walks to the desk and asks it
+    // to fly the other cards in around this one. Clicking the empty desk does the same.
+    const corner = document.querySelector('[data-put-back]');
+    corner?.addEventListener('click', () => {
+      try { sessionStorage.setItem('pliffdax:desk:return', JSON.stringify(corner.dataset.itemRef)); } catch {}
+    });
+    document.querySelector('[data-sheet-page]')?.addEventListener('click', (e) => {
+      if (!e.target.closest('.sheet-frame') && !getSelection()?.toString()) corner?.click();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') corner?.click();
+    });
+  </script>
+</Base>

@@ -1,0 +1,41 @@
+---
+import '../styles/global.css';
+import { getImage } from 'astro:assets';
+import favicon from '../../images/favicon.png';
+import avatar from '../../images/avatar.png';
+import TopBar from '../components/TopBar.astro';
+import { site } from '../data/now';
+
+interface Props {
+  title?: string;
+  description?: string;
+  current?: 'notes' | 'projects';
+  deskControls?: boolean;
+}
+
+const { title, description = site.tagline, current, deskControls = false } = Astro.props;
+const fullTitle = title ? `${title} · ${site.domain}` : site.domain;
+const touchIcon = await getImage({ src: avatar, width: 180, height: 180, format: 'png' });
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#1e1915" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href={favicon.src} />
+    <link rel="apple-touch-icon" href={touchIcon.src} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+  </head>
+  <body>
+    <TopBar current={current} deskControls={deskControls} />
+    <slot />
+  </body>
+</html>

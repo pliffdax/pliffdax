@@ -1,0 +1,9 @@
+---
+import Base from '../../layouts/Base.astro';
+import Desk from '../../components/Desk.astro';
+---
+
+<!-- Same desk as the front page, opened on the notes view. -->
+<Base title="Notes" description="Short notes, newest first." current="notes" deskControls>
+  <Desk view="notes" />
+</Base>

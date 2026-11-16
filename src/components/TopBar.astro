@@ -1,0 +1,26 @@
+---
+import { site } from '../data/now';
+
+interface Props {
+  current?: 'notes' | 'projects';
+  deskControls?: boolean;
+}
+const { current, deskControls } = Astro.props;
+---
+
+<header class="bar">
+  <a class="bar__home" href="/" data-nav="desk">pliffdax<span>.</span>dev</a>
+  <nav aria-label="Main">
+    {
+      deskControls && (
+        <button type="button" data-tidy-toggle aria-pressed="false" hidden>
+          <span class="bar__glyph" aria-hidden="true">⁂</span>
+          <span data-tidy-label>tidy up</span>
+        </button>
+      )
+    }
+    <a href="/notes" data-nav="notes" aria-current={current === 'notes' ? 'page' : undefined}>notes</a>
+    <a href="/projects" data-nav="projects" aria-current={current === 'projects' ? 'page' : undefined}>projects</a>
+    <a href={site.source} target="_blank" rel="noopener noreferrer">source ↗</a>
+  </nav>
+</header>

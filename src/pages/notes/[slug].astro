@@ -1,0 +1,37 @@
+---
+import { render } from 'astro:content';
+import Sheet from '../../layouts/Sheet.astro';
+import { getNotes } from '../../lib/content';
+import { fmtLong, readingTime } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const notes = await getNotes();
+  return notes.map((note, i) => ({
+    params: { slug: note.id },
+    props: { note, newer: notes[i - 1], older: notes[i + 1] },
+  }));
+}
+
+const { note, newer, older } = Astro.props;
+const { Content } = await render(note);
+---
+
+<Sheet
+  title={note.data.title}
+  description={note.data.summary}
+  itemId={`note-${note.id}`}
+  kind="note"
+  current="notes"
+>
+  <div class="sheet__meta mono">
+    <span>note</span>
+    <time datetime={note.data.date.toISOString()}>{fmtLong(note.data.date)}</time>
+    <span>{readingTime(note.body ?? '')}</span>
+  </div>
+  <h1>{note.data.title}</h1>
+  <div class="prose"><Content /></div>
+  <nav class="sheet__foot mono" aria-label="More notes">
+    {older && <a href={`/notes/${older.id}`}>← {older.data.title}</a>}
+    {newer && <a class="next" href={`/notes/${newer.id}`}>{newer.data.title} →</a>}
+  </nav>
+</Sheet>

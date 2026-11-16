@@ -1,0 +1,65 @@
+---
+import Polaroid from './Polaroid.astro';
+import NowNote from './NowNote.astro';
+import BizCard from './BizCard.astro';
+import ProjectFolder from './ProjectFolder.astro';
+import NoteCard from './NoteCard.astro';
+import { getNotes, getProjects } from '../lib/content';
+import { fixedSpots, noteSpot, projectSpot } from '../lib/layout';
+import deskScript from '../scripts/desk.js?raw';
+
+export type DeskView = 'desk' | 'notes' | 'projects';
+interface Props {
+  view?: DeskView;
+}
+const { view = 'desk' } = Astro.props;
+const [projects, notes] = await Promise.all([getProjects(), getNotes()]);
+---
+
+<main class="desk" data-desk data-view={view} data-layout={view === 'desk' ? 'tidy' : 'shelf'}>
+  <h1 class="visually-hidden">pliffdax — projects, short notes and experiments</h1>
+
+  <header class="desk__shelf-head" data-for="notes">
+    <h2>Notes</h2>
+    <p>Short ones, newest first.</p>
+  </header>
+  <header class="desk__shelf-head" data-for="projects">
+    <h2>Projects</h2>
+    <p>Things I'm building, finished or not.</p>
+  </header>
+
+  <div class="desk__group desk__group--intro">
+    <div class="desk__cards">
+      <Polaroid layout={fixedSpots.me} />
+      <NowNote layout={fixedSpots.now} />
+      <BizCard layout={fixedSpots.socials} />
+    </div>
+  </div>
+
+  <section class="desk__group desk__group--projects" aria-labelledby="desk-projects">
+    <h2 id="desk-projects">Projects</h2>
+    <div class="desk__cards">
+      {projects.map((p, i) => <ProjectFolder project={p} layout={projectSpot(i, p.id)} />)}
+    </div>
+  </section>
+
+  <section class="desk__group desk__group--notes" aria-labelledby="desk-notes">
+    <h2 id="desk-notes">Notes</h2>
+    <div class="desk__cards">
+      {notes.map((n, i) => <NoteCard note={n} layout={noteSpot(i, n.id)} />)}
+    </div>
+  </section>
+
+  <p class="desk__hint mono" data-hint aria-hidden="true">drag anything around · click to open</p>
+</main>
+
+<!-- A note or project opened in place: the sheet is fetched from its own static page. -->
+<div class="reader" data-reader role="dialog" aria-modal="true" hidden>
+  <div class="sheet-wrap">
+    <div data-reader-slot></div>
+  </div>
+</div>
+
+<!-- Inline and synchronous on purpose: cards must be in place before first paint,
+     so a view transition back to the desk lands on the right spot. -->
+<script is:inline set:html={deskScript} />

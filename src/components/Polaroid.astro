@@ -1,0 +1,21 @@
+---
+import { Image } from 'astro:assets';
+import avatar from '../../images/avatar.png';
+
+interface Props {
+  layout: { cx: number; cy: number; r: number };
+}
+const { layout } = Astro.props;
+---
+
+<figure
+  class="item polaroid surface"
+  data-item="me"
+  data-cx={layout.cx}
+  data-cy={layout.cy}
+  data-r={layout.r}
+  style="view-transition-name: item-me"
+>
+  <Image src={avatar} width={176} height={176} densities={[1, 2]} format="webp" quality={82} alt="Portrait of pliffdax" loading="eager" />
+  <figcaption class="mono"><strong>pliffdax</strong><span>2026</span></figcaption>
+</figure>

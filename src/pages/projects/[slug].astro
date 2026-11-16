@@ -1,0 +1,44 @@
+---
+import { render } from 'astro:content';
+import Sheet from '../../layouts/Sheet.astro';
+import { getProjects } from '../../lib/content';
+import { fmtLong } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const { title, summary, status, started, tags, links } = project.data;
+---
+
+<Sheet
+  title={title}
+  description={summary}
+  itemId={`project-${project.id}`}
+  kind="folder"
+  current="projects"
+>
+  <div class="sheet__meta mono">
+    <span>project</span>
+    <span class="status" data-status={status}>{status}</span>
+    <span>since {fmtLong(started)}</span>
+  </div>
+  <h1>{title}</h1>
+  <p class="sheet__lede">{summary}</p>
+  <div class="prose"><Content /></div>
+  {
+    links.length > 0 && (
+      <div class="sheet__links mono">
+        {links.map((l) => (
+          <a href={l.href} target="_blank" rel="noopener noreferrer">
+            {l.label} ↗
+          </a>
+        ))}
+      </div>
+    )
+  }
+  {tags.length > 0 && <div class="sheet__foot mono"><span>{tags.join(' · ')}</span></div>}
+</Sheet>

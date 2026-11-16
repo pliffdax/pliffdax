@@ -1,0 +1,30 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { fmtShort } from '../lib/format';
+
+interface Props {
+  note: CollectionEntry<'notes'>;
+  layout?: { cx: number; cy: number; r: number };
+}
+const { note, layout } = Astro.props;
+const id = `note-${note.id}`;
+---
+
+<a
+  class="item card surface"
+  href={`/notes/${note.id}`}
+  draggable="false"
+  data-open
+  data-item={id}
+  data-cx={layout?.cx}
+  data-cy={layout?.cy}
+  data-r={layout?.r}
+  style={`view-transition-name: item-${id}`}
+>
+  <div class="card__meta mono">
+    <span>note</span>
+    <time datetime={note.data.date.toISOString()}>{fmtShort(note.data.date)}</time>
+  </div>
+  <h3 class="card__title">{note.data.title}</h3>
+  <p class="card__summary">{note.data.summary}</p>
+</a>

@@ -1,0 +1,33 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  layout?: { cx: number; cy: number; r: number };
+}
+const { project, layout } = Astro.props;
+const id = `project-${project.id}`;
+const { title, summary, status, tags } = project.data;
+---
+
+<a
+  class="item folder"
+  href={`/projects/${project.id}`}
+  draggable="false"
+  data-open
+  data-item={id}
+  data-cx={layout?.cx}
+  data-cy={layout?.cy}
+  data-r={layout?.r}
+  style={`view-transition-name: item-${id}`}
+>
+  <span class="folder__tab mono">project</span>
+  <div class="folder__body surface">
+    <h3 class="folder__title">{title}</h3>
+    <p class="folder__summary">{summary}</p>
+    <div class="folder__meta mono">
+      <span class="status" data-status={status}>{status}</span>
+      {tags.length > 0 && <span>{tags.slice(0, 2).join(' · ')}</span>}
+    </div>
+  </div>
+</a>

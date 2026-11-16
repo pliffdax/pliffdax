@@ -1,0 +1,7 @@
+# Discord has no public profile link for a username: the tile just shows the handle
+# (clicking it copies "pliffdax" to the clipboard).
+label: "@pliffdax"
+handle: pliffdax
+icon: discord
+copy: true
+order: 7

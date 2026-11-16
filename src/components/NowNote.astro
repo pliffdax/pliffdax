@@ -1,0 +1,54 @@
+---
+import { now } from '../data/now';
+import { fmtShort } from '../lib/format';
+
+interface Props {
+  layout: { cx: number; cy: number; r: number };
+}
+const { layout } = Astro.props;
+const [current, ...past] = now;
+---
+
+<section
+  class="item now"
+  data-item="now"
+  data-cx={layout.cx}
+  data-cy={layout.cy}
+  data-r={layout.r}
+  aria-label="What I'm doing now"
+  style="view-transition-name: item-now"
+>
+  <span class="now__pin" aria-hidden="true"></span>
+  <div class="now__inner">
+    <div class="now__face surface">
+      <div class="now__label mono">
+        <span>now</span>
+        <time datetime={current.date}>{fmtShort(new Date(current.date))}</time>
+      </div>
+      <p class="now__text">{current.text}</p>
+      <button class="now__flip mono" type="button" data-flip aria-expanded="false">
+        {past.length ? `history (${past.length})` : 'history'} ↻
+      </button>
+    </div>
+    <div class="now__face now__face--back surface" inert>
+      <div class="now__label mono"><span>before</span></div>
+      {
+        past.length ? (
+          <ol class="now__history">
+            {past.map((p) => (
+              <li>
+                <time class="mono" datetime={p.date}>
+                  {fmtShort(new Date(p.date))}
+                </time>
+                {p.text}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p class="now__empty">Nothing yet. This is the first “now”.</p>
+        )
+      }
+      <button class="now__flip mono" type="button" data-flip>↺ back</button>
+    </div>
+  </div>
+</section>
