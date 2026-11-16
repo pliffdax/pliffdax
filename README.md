@@ -53,6 +53,9 @@ npm run dev       # http://localhost:4321
 npm run build     # static output in dist/
 ```
 
+Pull requests run the required Astro checks and build. Merging into `main`
+automatically publishes to the VPS. See [deployment and rollback](ops/README.md).
+
 | What | Where |
 | --- | --- |
 | Notes | `src/content/notes/*.md` |
