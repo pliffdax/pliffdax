@@ -63,7 +63,9 @@ Caddy manages HTTPS and redirects `www` to the apex.
 Normally merge a PR or rerun Actions. For an emergency local publication, use a
 clean, checked-out commit and provide `DEPLOY_HOST`, `DEPLOY_USER`,
 `DEPLOY_KEY_FILE`, and `DEPLOY_KNOWN_HOSTS_FILE`, then run `npm ci` and
-`npm run deploy`. Do not put the key in the repository.
+`npm run deploy`. This requires rsync 3 (`brew install rsync` on macOS; the
+built-in openrsync is incompatible with the server's restricted rsync wrapper).
+Do not put the key in the repository.
 
 For an immediate rollback, inspect the retained releases with the existing
 administrator SSH account, then switch to a known-good SHA:

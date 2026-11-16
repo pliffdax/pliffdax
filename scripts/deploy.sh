@@ -7,6 +7,10 @@ revision=${1:?Usage: deploy.sh COMMIT_SHA}
 : "${DEPLOY_USER:?Set DEPLOY_USER}"
 : "${DEPLOY_KEY_FILE:?Set DEPLOY_KEY_FILE}"
 : "${DEPLOY_KNOWN_HOSTS_FILE:?Set DEPLOY_KNOWN_HOSTS_FILE}"
+if [[ $(rsync --version) == openrsync:* ]]; then
+  echo 'rsync 3 is required. On macOS: brew install rsync' >&2
+  exit 1
+fi
 test -s dist/index.html
 printf '%s\n' "$revision" > dist/revision.txt
 
