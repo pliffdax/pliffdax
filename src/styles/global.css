@@ -365,6 +365,13 @@ img {
   -webkit-user-drag: none;
   -webkit-tap-highlight-color: transparent;
   will-change: transform;
+  /* A no-op filter makes Firefox's WebRender draw the card once into its own
+     surface and move that, instead of re-rasterizing every glyph on the card
+     for each new rotation and scale the engine sets per frame. Without it a
+     view switch kept all four WebRender workers busy rasterizing text and
+     dropped Zen from 120 to 60-90fps; GPU-process CPU fell ~4x with it.
+     Safari is unaffected and Chrome pays almost nothing. */
+  filter: contrast(1.0001);
   transform-origin: 50% 40%;
   view-transition-class: card;
 }
