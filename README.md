@@ -25,7 +25,7 @@
   &emsp;
   <picture><source media="(prefers-color-scheme: dark)" srcset="images/readme/discord-dark.svg"><img src="images/readme/discord-light.svg" width="18" height="18" align="center" alt="Discord"></picture>&nbsp;<code>pliffdax</code>
   &emsp;
-  <a href="https://discord.gg/cjfdwDsXTK" title="Discord server"><picture><source media="(prefers-color-scheme: dark)" srcset="images/readme/discord-dark.svg"><img src="images/readme/discord-light.svg" width="18" height="18" align="center" alt="Discord server"></picture>&nbsp;server</a>
+  <a href="https://discord.gg/cjfdwDsXTK" title="Discord community"><picture><source media="(prefers-color-scheme: dark)" srcset="images/readme/discord-dark.svg"><img src="images/readme/discord-light.svg" width="18" height="18" align="center" alt="Discord community"></picture>&nbsp;community</a>
 </p>
 
 <br>
