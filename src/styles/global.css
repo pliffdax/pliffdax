@@ -587,6 +587,7 @@ img {
 
 /* -- status dot */
 .status {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -604,8 +605,19 @@ img {
   color: var(--terra);
 }
 
-.status[data-status='in progress']::before {
+/* the pulse ring is its own dot animated with transform and opacity, so it never
+   repaints; animating box-shadow repainted the card every frame, even idle */
+.status[data-status='in progress']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(50% - 3.5px);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
   animation: pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .status[data-status='ongoing'] {
@@ -620,10 +632,12 @@ img {
 @keyframes pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(194 96 63 / 0.45);
+    opacity: 0.45;
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 0 5px rgb(194 96 63 / 0);
+    opacity: 0;
+    transform: scale(2.43); /* 7px dot + 5px ring each side */
   }
 }
 
@@ -682,12 +696,37 @@ img {
   cursor: auto;
 }
 
-/* the frame carries the shadow, because the sheet's mask (folded corner) would clip a box-shadow */
+/* --fold lives on the frame so its shadow can follow the folded corner too */
 .sheet-frame {
+  --fold: 26px;
+  position: relative;
   max-width: 720px;
   margin-inline: auto;
-  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.28)) drop-shadow(0 22px 34px rgb(0 0 0 / 0.38));
   transform-origin: 50% 0;
+  transition: --fold 0.5s var(--ease-spring);
+}
+
+.sheet-frame:has(.sheet__corner:hover),
+.sheet-frame:has(.sheet__corner:focus-visible) {
+  --fold: 40px;
+}
+
+/* The sheet's shadow, also used by the flying paper: a box-shadow on a layer behind
+   the paper, not filter: drop-shadow() on it. Safari re-renders a drop-shadow on a
+   sheet this size every frame at Retina density and stalls for 70-200ms. (The
+   sheet's own mask would hide a box-shadow.) The layer starts below the folded
+   corner, so no square shadow shows around the missing corner; the shadow falls
+   downward, so the top edge loses nothing visible. */
+.sheet-frame::before,
+.morph__paper::before {
+  content: '';
+  position: absolute;
+  inset: var(--fold) 0 0;
+  border-radius: 4px;
+  box-shadow:
+    0 2px 3px rgb(0 0 0 / 0.28),
+    0 22px 34px rgb(0 0 0 / 0.38);
+  pointer-events: none;
 }
 
 @property --fold {
@@ -697,7 +736,6 @@ img {
 }
 
 .sheet {
-  --fold: 26px;
   position: relative;
   padding: clamp(28px, 6vw, 64px) clamp(22px, 6vw, 72px) clamp(32px, 6vw, 56px);
   background: var(--paper);
@@ -707,12 +745,6 @@ img {
   view-transition-class: card;
   -webkit-mask: linear-gradient(225deg, transparent var(--fold), #000 calc(var(--fold) + 0.5px));
   mask: linear-gradient(225deg, transparent var(--fold), #000 calc(var(--fold) + 0.5px));
-  transition: --fold 0.5s var(--ease-spring);
-}
-
-.sheet:has(.sheet__corner:hover),
-.sheet:has(.sheet__corner:focus-visible) {
-  --fold: 40px;
 }
 
 /* the dog-ear: lower-left half of the corner square, the part of the page folded over */
@@ -795,10 +827,6 @@ img {
   margin: 0;
   transform-origin: 0 0 !important;
   will-change: transform, opacity;
-}
-
-.morph__paper {
-  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.28)) drop-shadow(0 22px 34px rgb(0 0 0 / 0.38));
 }
 
 /* same face as the sheet, folded corner included, so the hand-off is invisible */
