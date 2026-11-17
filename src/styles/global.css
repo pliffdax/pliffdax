@@ -211,7 +211,8 @@ img {
   height: max(640px, calc(100svh - var(--bar-h)));
 }
 
-.desk__group > h2 {
+.desk__group > h2,
+.desk__label-ghost {
   margin: 0 0 16px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -220,6 +221,13 @@ img {
   text-transform: uppercase;
   color: var(--desk-ink-soft);
   transition: opacity 0.3s;
+}
+
+/* a label's copy fading out where it stood when a layout switch hid it (desk.js) */
+.desk__label-ghost {
+  position: absolute;
+  margin: 0;
+  pointer-events: none;
 }
 
 .desk__hint {

@@ -198,15 +198,47 @@
   }
   const screenCenter = () => ({ x: innerWidth / 2, y: innerHeight * 0.45 });
 
+  // Group labels ("Projects", "Notes") are in the flow only in tidy, so a layout switch
+  // shows or hides them at once. A label that appears rises in; one that disappears
+  // leaves a copy at its old spot that fades out.
+  const labels = [...desk.querySelectorAll('.desk__group > h2')];
+  function labelBox(h) {
+    const r = h.getBoundingClientRect();
+    if (!r.width) return null;
+    const d = desk.getBoundingClientRect();
+    return { left: r.left - d.left, top: r.top - d.top, width: r.width };
+  }
+  function fadeLabel(h, before) {
+    const shown = h.getClientRects().length > 0;
+    if (shown && !before) {
+      h.animate([{ opacity: 0, transform: 'translateY(10px)' }, {}], {
+        duration: 500, delay: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'backwards',
+      });
+    } else if (!shown && before) {
+      const g = h.cloneNode(true);
+      g.removeAttribute('id');
+      g.setAttribute('aria-hidden', 'true');
+      g.className = 'desk__label-ghost';
+      g.style.cssText = `left:${before.left}px;top:${before.top}px;width:${before.width}px`;
+      desk.append(g);
+      g.animate([{}, { opacity: 0, transform: 'translateY(-8px)' }], {
+        duration: 260, easing: 'ease-out', fill: 'forwards',
+      }).onfinish = () => g.remove();
+    }
+  }
+
   // Re-lay everything for the current `view` / mode. Each card keeps its on-screen
   // position across the layout switch, then springs to where it now belongs.
   function relayout(animate) {
     const seen = bodies.map((b) => ({ x: b.el.offsetLeft + b.x, y: b.el.offsetTop + b.y }));
+    for (const g of desk.querySelectorAll('.desk__label-ghost')) g.remove();
+    const labelsBefore = labels.map(labelBox);
     layout = layoutFor(view);
     desk.dataset.layout = layout;
     desk.dataset.view = view;
     measure();
     const motion = animate && !reduce.matches;
+    if (motion) labels.forEach((h, k) => fadeLabel(h, labelsBefore[k]));
     bodies.forEach((b, k) => {
       b.x = seen[k].x - b.el.offsetLeft;
       b.y = seen[k].y - b.el.offsetTop;
