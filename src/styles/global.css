@@ -667,18 +667,22 @@ img {
   color: var(--ink-soft);
 }
 
+/* Title and summary sit on the card's rules: every line box is one 26px rule pitch,
+   and the margins put each baseline on a rule's top edge (the first rule is at 61px).
+   In a 26px line box Bricolage's baseline lands at 13px + 0.33em (ascent 0.93,
+   descent 0.27), so the margins below cancel that offset for each font size. */
 .card__title {
-  margin: 12px 0 4px;
+  margin: calc(61px - 16px - 22px - 13px - 0.33em) 0 0;
   font-size: 20px;
-  line-height: 1.25;
+  line-height: 26px;
   font-weight: 620;
   letter-spacing: -0.01em;
 }
 
 .card__summary {
-  margin: 0;
+  margin: calc(6.6px - 0.33em) 0 0; /* 6.6px = the title's 0.33em */
   font-size: 14.5px;
-  line-height: 1.6;
+  line-height: 26px;
   color: rgb(35 28 23 / 0.72);
 }
 
