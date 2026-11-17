@@ -26,6 +26,22 @@
   const narrow = matchMedia('(max-width: 760px)');
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
 
+  // Focus moved by script (open, close, flip) shows the ring only after keyboard use.
+  // Taps on iOS Safari don't focus links, so without this every scripted focus
+  // after a tap counts as :focus-visible and the card is left outlined.
+  let viaKeyboard = false;
+  addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey) viaKeyboard = true; }, true);
+  addEventListener('pointerdown', () => { viaKeyboard = false; }, true);
+  const moveFocus = (el) => {
+    if (!el) return;
+    if (!viaKeyboard) {
+      // fallback for engines that ignore the focusVisible option
+      el.classList.add('is-quiet-focus');
+      el.addEventListener('blur', () => el.classList.remove('is-quiet-focus'), { once: true });
+    }
+    el.focus({ preventScroll: true, focusVisible: viaKeyboard });
+  };
+
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const rand = (lo, hi) => lo + Math.random() * (hi - lo);
   const root = document.documentElement;
@@ -167,13 +183,6 @@
     }
   };
 
-  let movingTimer = 0;
-  const markMoving = (ms) => {
-    desk.classList.add('is-moving');
-    clearTimeout(movingTimer);
-    movingTimer = setTimeout(() => desk.classList.remove('is-moving'), ms);
-  };
-
   // A spot fully outside the viewport, straight out from `origin` through the card.
   function awayFrom(b, origin) {
     const r = b.el.getBoundingClientRect();
@@ -248,7 +257,6 @@
     preferred = next;
     put(MODE_KEY, next);
     if (view !== 'desk') return;
-    if (!reduce.matches) markMoving(1100);
     relayout(true);
   }
 
@@ -435,7 +443,7 @@
     const [front, back] = note.querySelectorAll('.now__face');
     front.inert = flipped;
     back.inert = !flipped;
-    note.querySelector('.now__face:not([inert]) [data-flip]')?.focus({ preventScroll: true });
+    moveFocus(note.querySelector('.now__face:not([inert]) [data-flip]'));
     note.querySelector('[data-flip][aria-expanded]')?.setAttribute('aria-expanded', String(flipped));
     const b = byEl.get(note);
     if (b && !reduce.matches) { b.v.s += 1.6; kick(); }
@@ -697,7 +705,7 @@
       reader.classList.remove('is-morphing');
       dropMorph();
       cancelAnims();
-      sheet.focus({ preventScroll: true });
+      moveFocus(sheet);
       if (!(history.state && history.state.reader)) close(); // back was pressed mid-open
     };
 
@@ -735,6 +743,7 @@
     stopAnims();
     dropMorph();
     const { b, frame, list, prevTitle } = reading;
+    root.classList.add('is-closing');
 
     const done = () => {
       b.el.style.visibility = '';
@@ -744,13 +753,13 @@
       reader.classList.remove('is-morphing');
       reader.style.overflowY = '';
       slot.innerHTML = '';
-      root.classList.remove('is-reading');
+      root.classList.remove('is-reading', 'is-closing');
       desk.inert = false;
       if (toggle) toggle.disabled = false;
       document.title = prevTitle;
       reading = null;
       closing = false;
-      b.el.focus({ preventScroll: true });
+      moveFocus(b.el);
       if (pendingView) { const p = pendingView; pendingView = null; setView(p.view, true, p.push); }
     };
 

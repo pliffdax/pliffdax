@@ -35,7 +35,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:url" content={canonical} />
   </head>
   <body>
-    <TopBar current={current} deskControls={deskControls} />
-    <slot />
+    <div class="page">
+      <TopBar current={current} deskControls={deskControls} />
+      <slot />
+    </div>
   </body>
 </html>
