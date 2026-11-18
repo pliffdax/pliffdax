@@ -572,6 +572,11 @@
     if (home) {
       const list = flyOut(centerOf(home.el), home, true);
       setTimeout(() => flyIn(list), 160);
+      // Without a cross-document view transition (unsupported, or none ran) nothing
+      // shrinks the sheet onto the card, so set the card down instead of popping it in.
+      const drop = () => { home.o = 0; home.s = 1.06; render(home); kick(); };
+      if ('onpagereveal' in window) addEventListener('pagereveal', (e) => { if (!e.viewTransition) drop(); }, { once: true });
+      else drop();
     }
   }
 
@@ -825,6 +830,84 @@
     allDone(anims).then(() => { if (token === runId) done(); }).catch(() => {});
   }
 
+  // A link inside the open sheet that points at another card (prev / next note).
+  const pathOf = (a) => a.pathname.replace(/\/+$/, '') || '/';
+  const byPath = new Map(bodies.filter((b) => b.el.matches('a[data-open]')).map((b) => [pathOf(b.el), b]));
+  const plainClick = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+  const cardFor = (a) => {
+    if (!a || !reading || a.origin !== location.origin || (a.target && a.target !== '_self')) return null;
+    const nb = byPath.get(pathOf(a));
+    return nb && nb !== reading.b && !nb.away ? nb : null;
+  };
+
+  // Swap the open sheet for another card's sheet without leaving the desk. A full page
+  // load would leave the way back to the cross-document view transition, which not
+  // every browser runs, and then the card just appears while the rest fly in.
+  async function flip(nb, href, dir) {
+    if (!reading || opening || closing) return;
+    opening = true;
+    stopAnims(); // the previous flip may still be sliding in
+    const token = ++runId;
+    const loading = load(href);
+    loading.catch(() => {});
+    const motion = !reduce.matches;
+    if (motion) {
+      anims = [reading.frame.animate([{}, { opacity: 0, transform: `translateX(${-dir * 20}px)` }], {
+        duration: 140, easing: 'ease-in', fill: 'forwards',
+      })];
+    }
+    let data;
+    try { [data] = await Promise.all([loading, ...anims.map((a) => a.finished)]); } catch {
+      if (token === runId) location.href = href;
+      return;
+    }
+    if (token !== runId || !reading || closing) return; // put back meanwhile
+    opening = false;
+    anims = [];
+
+    const { b: ob, list } = reading;
+    const k = list.findIndex((it) => it.b === nb);
+    if (k < 0 || !nb.rest) { location.href = href; return; }
+    clearTimeout(list[k].timer);
+    // the new card waits at its spot under the sheet, so putting back lands there
+    nb.t.x = nb.rest.x; nb.t.y = nb.rest.y; nb.t.r = nb.rest.r;
+    nb.rest = null;
+    snap(nb);
+    nb.el.style.visibility = 'hidden';
+    // the old one joins the cards parked off-screen
+    ob.rest = { x: ob.t.x, y: ob.t.y, r: ob.t.r };
+    const c = centerOf(nb.el);
+    const goal = awayFrom(ob, c);
+    ob.t.x = goal.x; ob.t.y = goal.y; ob.t.r = goal.r;
+    snap(ob);
+    ob.el.style.visibility = '';
+    list[k] = { b: ob, goal };
+    // flyIn brings the far cards first, the ones next to the open card last
+    const d = desk.getBoundingClientRect();
+    const dist = ({ b }) => Math.hypot(
+      d.left + b.el.offsetLeft + b.rest.x + b.w / 2 - c.x,
+      d.top + b.el.offsetTop + b.rest.y + b.h / 2 - c.y,
+    );
+    list.sort((p, q) => dist(p) - dist(q));
+
+    slot.innerHTML = data.html;
+    const frame = slot.querySelector('.sheet-frame');
+    const sheet = frame.querySelector('.sheet');
+    sheet.style.viewTransitionName = 'none';
+    Object.assign(reading, { b: nb, frame, sheet });
+    reader.setAttribute('aria-label', data.title);
+    reader.scrollTop = 0;
+    document.title = data.title;
+    // replace, not push: Back still puts the sheet back on the desk
+    history.replaceState({ ...(history.state || {}), view, reader: nb.id, href }, '', href);
+    if (motion) {
+      anims = [frame.animate([{ opacity: 0, transform: `translateX(${dir * 28}px)` }, {}], {
+        duration: 320, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      })];
+    }
+    moveFocus(sheet);
+  }
+
   function requestClose() {
     if (!reading || closing) return;
     if (history.state && history.state.reader) history.back(); // popstate closes it
@@ -846,10 +929,24 @@
     reader.addEventListener('click', (e) => {
       const corner = e.target.closest('[data-put-back]');
       if (corner) { e.preventDefault(); requestClose(); return; }
+      const a = e.target.closest('a[href]');
+      const nb = a && !e.defaultPrevented && plainClick(e) ? cardFor(a) : null;
+      if (nb) {
+        e.preventDefault();
+        const foot = a.closest('.sheet__foot');
+        flip(nb, a.href, foot ? (a.classList.contains('next') ? 1 : -1) : 0);
+        return;
+      }
       if (opening || e.target.closest('.sheet-frame')) return;
       if (getSelection()?.toString()) return;
       requestClose();
     });
+    const prefetchIn = (e) => {
+      const a = e.target.closest && e.target.closest('a[href]');
+      if (cardFor(a)) load(a.href).catch(() => {});
+    };
+    reader.addEventListener('pointerover', prefetchIn);
+    reader.addEventListener('focusin', prefetchIn);
   }
 
   document.addEventListener('keydown', (e) => {
